@@ -3,6 +3,7 @@ from scapy.all import rdpcap
 from collections import defaultdict
 from scapy.all import IP, TCP, UDP, Raw
 from torch.utils.data import Dataset
+from tqdm import tqdm
 
 def group_packets_by_session(packet_list):
     sessions = defaultdict(list)
@@ -36,53 +37,57 @@ def group_packets_by_session(packet_list):
     return sessions
 
 def create_image_from_packet(packet, m):
-
-    if not Raw in packet: return np.zeros((int(m ** 0.5),int(m ** 0.5)), dtype=np.uint8)
+    if not Raw in packet:
+        return np.zeros((int(m ** 0.5), int(m ** 0.5)), dtype=np.uint8)
     
     payload = packet[Raw].load
-    payload_m = payload[0:m] + bytes([0 for i in range(max(0,m - len(payload)))])
-    img = np.frombuffer(payload_m, dtype=np.uint8).reshape(int(m ** 0.5),int(m ** 0.5)) 
+    payload_m = payload[0:m] + bytes([0 for i in range(max(0, m - len(payload)))])
+    img = np.frombuffer(payload_m, dtype=np.uint8).reshape(int(m ** 0.5), int(m ** 0.5)) 
     return img
     
 def create_image_from_session(session, n, m):
-    assert int(n ** 0.5) * int(n ** 0.5) == n, "n is not a perfect square"
-    assert int(m ** 0.5) * int(m ** 0.5) == m, "m is not a perfect square"
-
     rn = int(n ** 0.5)
     rm = int(m ** 0.5)
 
+    assert rn ** 2 == n, "n is not a perfect square"
+    assert rm ** 2 == m, "m is not a perfect square"
+
     pkt_images = [create_image_from_packet(packet, m) for packet in session[0:n]] 
-    padding_images = [np.zeros((rm,rm), dtype=np.uint8) for extra in range(max(0,n - len(session)))]
+    padding_images = [np.zeros((rm, rm), dtype=np.uint8) for extra in range(max(0, n - len(session)))]
 
     pkt_lens = [packet[IP].len - packet[IP].ihl * 4 for packet in session[0:n]]
-    padding_lens = [1501 for extra in range(max(0,n - len(session)))]
+    padding_lens = [1501 for extra in range(max(0, n - len(session)))]
     
-    image = np.stack(pkt_images + padding_images).reshape(rn,rn,rm,rm).transpose(0,2,1,3)
+    image = np.stack(pkt_images + padding_images).reshape(rn, rn, rm, rm).transpose(0, 2, 1, 3)
     lengths = np.array(pkt_lens + padding_lens)
 
-    return image.reshape(rn * rm ,rn * rm), lengths
+    return image.reshape(rn * rm, rn * rm), lengths
 
 class SessionImageDataset(Dataset):
     def __init__(self, path_to_pcaps: list, labels_of_pcap: list, n , m):
         super().__init__()
-        assert len(path_to_pcaps) == len(labels_of_pcap) ,"length of labels and pcap paths should be same"
+        assert len(path_to_pcaps) == len(labels_of_pcap), "length of labels and pcap paths should be same"
 
         self.images = []
         self.lens = []
         self.labels = []
 
         for idx in range(len(path_to_pcaps)):
+            print(f"Loading {path_to_pcaps[idx]}")
             packets = rdpcap(path_to_pcaps[idx])
+            print(f"Grouping packets by session")
             sessions = group_packets_by_session(packets)
 
-            for session in list(sessions.values()):
-                img, len_array = create_image_from_session(session , n, m)
+            for session in tqdm(list(sessions.values()), desc=f"Creating session images"):
+                img, len_array = create_image_from_session(session, n, m)
                 self.images.append(img)
                 self.lens.append(len_array)
                 self.labels.append(labels_of_pcap[idx])
+            
+            print(f"Loaded {len(sessions)} sessions from {path_to_pcaps[idx]}")
 
     def __len__(self):
-        return len(self.data)
+        return len(self.images)
     
     def __getitem__(self, index):
-        return self.data[index],self.lens[index],self.labels[index]
+        return self.images[index], self.lens[index], self.labels[index]

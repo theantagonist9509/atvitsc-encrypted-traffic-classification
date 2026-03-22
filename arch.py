@@ -83,7 +83,7 @@ class ResAtConv(nn.Module):
         gmp = F.adaptive_max_pool2d(feats, 1).flatten(start_dim=1)
         compressed = torch.tanh(self.gap_linear(gap)) + torch.tanh(self.gmp_linear(gmp))
         attention = torch.sigmoid(self.compressed_linear(compressed))
-        attention = attention.unsqueeze(-1).unsqueeze(-1)            # (B, conv_channels, 1, 1)
+        attention = attention.unsqueeze(-1).unsqueeze(-1)           # (B, conv_channels, 1, 1)
         feats = feats + attention * feats
         feats = self.conv_1x1(feats).flatten(start_dim=1)           # (B, feats_dim)
         return feats
@@ -175,12 +175,12 @@ class ATVITSC(nn.Module):
         patch_size:         int = 16,
         max_packet_len:     int = 1502,
         shared_feat_dim:    int = 256,
+        num_classes:        int = 2,    # C:  number of traffic classes
         # ── dynamic weighting ──
-        dw_hidden:   int = 128,      # h:  dimension of intermediate vector z
-        temperature: float = 500.0,  # τ:  softmax temperature
+        dw_hidden:   int = 128,         # h:  dimension of intermediate vector z
+        temperature: float = 500.0,     # τ:  softmax temperature
         # ── classifier head ──
-        num_classes: int = 2,        # C:  number of traffic classes
-        cls_hidden:  int = 128,      # hidden dim between the two FC layers
+        cls_hidden:  int = 128,         # hidden dim between the two FC layers
         # ── sub-module configs ──
         pvt_kwargs:  dict | None = None,
         stfe_kwargs: dict | None = None,
