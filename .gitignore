@@ -9,7 +9,7 @@ wheels/
 # Virtual environments
 .venv
 
-# Dataset
 archive.zip
 archive
 checkpoints
+.ipynb_checkpoints
