@@ -23,25 +23,25 @@ TRAIN_SPLIT = 0.8
 M_SIZE = 256
 N_SIZE = 16
 
-PCAP_PATHS = [
+BENIGN_PCAP_PATHS = [
     "archive/Benign/BitTorrent.pcap",
     "archive/Benign/Facetime.pcap",
-    #"archive/Benign/FTP.pcap",
     "archive/Benign/Gmail.pcap",
-    #"archive/Benign/MySQL.pcap",
     "archive/Benign/Outlook.pcap",
     "archive/Benign/Skype.pcap",
-    #"archive/Benign/SMB/SMB/SMB-1.pcap",
-    #"archive/Benign/SMB/SMB/SMB-2.pcap",
-    #"archive/Benign/Weibo/Weibo/Weibo-1.pcap",
-    #"archive/Benign/Weibo/Weibo/Weibo-2.pcap",
-    #"archive/Benign/Weibo/Weibo/Weibo-3.pcap",
-    #"archive/Benign/Weibo/Weibo/Weibo-4.pcap",
     "archive/Benign/WorldOfWarcraft.pcap",
 ]
-PCAP_LABELS = list(range(len(PCAP_PATHS)))
 
-SAVE_DIR = "checkpoints"
+MALWARE_PCAP_PATHS = [
+    "archive/Malware/Miuref.pcap",
+    "archive/Malware/Tinba.pcap",
+    "archive/Malware/Zeus.pcap",
+]
+
+PCAP_PATHS = BENIGN_PCAP_PATHS + MALWARE_PCAP_PATHS
+PCAP_LABELS = [0] * len(BENIGN_PCAP_PATHS) + [1] * len(MALWARE_PCAP_PATHS)
+
+SAVE_DIR = "checkpoints/benign-malware"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 # %%

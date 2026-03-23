@@ -53,10 +53,10 @@ def create_image_from_session(session, n, m):
     assert rm ** 2 == m, "m is not a perfect square"
 
     pkt_images = [create_image_from_packet(packet, m) for packet in session[0:n]] 
-    padding_images = [np.zeros((rm, rm), dtype=np.uint8) for extra in range(max(0, n - len(session)))]
+    padding_images = [np.zeros((rm, rm), dtype=np.uint8) for extra in range(max(0, n - len(session)))] # not enough packets in session for full image
 
-    pkt_lens = [packet[IP].len - packet[IP].ihl * 4 for packet in session[0:n]]
-    padding_lens = [1501 for extra in range(max(0, n - len(session)))]
+    pkt_lens = [min(packet[IP].len - packet[IP].ihl * 4, 1500) for packet in session[0:n]] # capping at 1500 in case of corrupted length field
+    padding_lens = [1501 for extra in range(max(0, n - len(session)))] # 1501 is greater than max possible packet length
     
     image = np.stack(pkt_images + padding_images).reshape(rn, rn, rm, rm).transpose(0, 2, 1, 3)
     lengths = np.array(pkt_lens + padding_lens)

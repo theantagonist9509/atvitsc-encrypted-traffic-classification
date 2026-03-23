@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 class PVT(nn.Module):
     """Packet-based Vision Transformer"""
 
-    def __init__(self, in_channels=1, image_size=64, patch_size=16, max_packet_len=1502, out_dim=256, depth=2, heads=12, mlp_dim=2048):
+    def __init__(self, in_channels=1, image_size=64, patch_size=16, num_packet_lens=1502, out_dim=256, depth=2, heads=12, mlp_dim=2048):
         super().__init__()
         self.vit = ViT(
             channels=in_channels,
@@ -23,11 +23,11 @@ class PVT(nn.Module):
             mlp_dim=mlp_dim,
             num_classes=1,   # dummy; classification head not used
         )
-        self.packet_len_embedding = nn.Embedding(max_packet_len, out_dim)
+        self.packet_len_embedding = nn.Embedding(num_packet_lens, out_dim)
 
     def forward(self, x, packet_lens):
         # x:            (B, C, H, W)
-        # packet_lens:  (B,) — ints in [0, max_packet_len)
+        # packet_lens:  (B,) — ints in [0, num_packet_lens)
         B = x.shape[0]
 
         # 1. Patch embedding
@@ -173,7 +173,7 @@ class ATVITSC(nn.Module):
         channels:           int = 1,
         image_size:         int = 64,
         patch_size:         int = 16,
-        max_packet_len:     int = 1502,
+        num_packet_lens:    int = 1502,
         shared_feat_dim:    int = 256,
         num_classes:        int = 2,    # C:  number of traffic classes
         # ── dynamic weighting ──
@@ -197,7 +197,7 @@ class ATVITSC(nn.Module):
             in_channels=channels,
             image_size=image_size,
             patch_size=patch_size,
-            max_packet_len=max_packet_len,
+            num_packet_lens=num_packet_lens,
             out_dim=shared_feat_dim,
             **pvt_kwargs
         )
