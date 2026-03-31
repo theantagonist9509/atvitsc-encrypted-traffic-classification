@@ -165,7 +165,7 @@ class STFE(nn.Module):
 
 # %%
 class ATVITSC(nn.Module):
-    """Attention-based Vision Transformer and Spatiotemporal for Traffic Classification"""
+    """Attention-based Vision Transformer and Spatiotemporal Feature Extractor for Encrypted Traffic Classification"""
 
     def __init__(
         self,
